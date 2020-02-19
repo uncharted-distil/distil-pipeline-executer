@@ -30,7 +30,7 @@ var (
 type Config struct {
 	AppPort      string `env:"PORT" envDefault:"8080"`
 	D3MOutputDir string `env:"D3MOUTPUTDIR" envDefault:"outputs"`
-	PipelineDir  string `env:"PipelineDir" envDefault:"pipelines"`
+	PipelineDir  string `env:"PIPELINE_DIR" envDefault:"pipelines"`
 	VerboseError bool   `env:"VERBOSE_ERROR" envDefault:"false"`
 }
 

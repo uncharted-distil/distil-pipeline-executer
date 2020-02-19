@@ -66,7 +66,7 @@ func getPipelines(directory string) ([]*PipelineInfo, error) {
 	for _, d := range directories {
 		isPipeline, isFit := util.IsPipelineDirectory(d)
 		if isPipeline {
-			meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(d, "datasetDoc.json"))
+			meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(d, "datasetDoc.json"), false)
 			if err != nil {
 				return nil, err
 			}
@@ -74,7 +74,7 @@ func getPipelines(directory string) ([]*PipelineInfo, error) {
 			modTime, _ := util.GetLastModifiedTime(path.Join(d, "pipeline.json"))
 			fitTime := time.Time{}
 			if isFit {
-				fitTime, _ = util.GetLastModifiedTime(path.Join(d, "pipeline.json"))
+				fitTime, _ = util.GetLastModifiedTime(path.Join(d, "pipeline.d3m"))
 			}
 
 			pipelines = append(pipelines, &PipelineInfo{

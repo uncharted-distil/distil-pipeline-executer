@@ -34,7 +34,7 @@ func IsPipelineDirectory(directory string) (bool, bool) {
 		isPipeline = false
 	}
 	if _, err := os.Stat(path.Join(directory, "pipeline.json")); os.IsNotExist(err) {
-		isPipeline = true
+		isPipeline = false
 	}
 	if _, err := os.Stat(path.Join(directory, "pipeline.d3m")); err == nil {
 		isFit = true
