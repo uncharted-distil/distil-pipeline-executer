@@ -26,6 +26,8 @@ var (
 	pipelinePath     = ""
 	pipelineJSONName = ""
 	pipelineD3MName  = ""
+	predictionPath   = ""
+	datasetPath      = ""
 
 	initialized = false
 )
@@ -40,7 +42,11 @@ func Initialize(config *Config) error {
 	pipelinePath = config.PipelineDir
 	pipelineJSONName = config.PipelineJSON
 	pipelineD3MName = config.PipelineD3M
+	datasetPath = config.DatasetDir
+	predictionPath = config.PredictionDir
 
+	log.Infof("using '%s' as dataset path", datasetPath)
+	log.Infof("using '%s' as prediction path", predictionPath)
 	log.Infof("using '%s' as pipeline path", pipelinePath)
 	log.Infof("using '%s' as pipeline json name", pipelineJSONName)
 	log.Infof("using '%s' as pipeline d3m name", pipelineD3MName)
@@ -63,4 +69,14 @@ func ResolvePipelineJSONPath(pipelineID string) string {
 // ResolvePipelineD3MPath returns the path pickled fitted pipeline.
 func ResolvePipelineD3MPath(pipelineID string) string {
 	return path.Join(pipelinePath, pipelineID, pipelineD3MName)
+}
+
+// ResolveDatasetPath returns the path for a dataset folder
+func ResolveDatasetPath(datasetID string) string {
+	return path.Join(datasetPath, datasetID)
+}
+
+// ResolvePredictionPath returns the path for a prediction folder
+func ResolvePredictionPath(predictionID string) string {
+	return path.Join(predictionPath, predictionID)
 }

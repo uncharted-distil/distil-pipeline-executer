@@ -58,7 +58,7 @@ func main() {
 		os.Exit(1)
 	}
 	log.Infof("%+v", spew.Sdump(config))
-	env.Initialize(config)
+	env.Initialize(&config)
 
 	// register routes
 	mux := goji.NewMux()
@@ -71,8 +71,8 @@ func main() {
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp))
 
 	// POST
-	//registerRoutePost(mux, "/distil/fit/:pipeline-id", routes.FitHandler(pgDataStorageCtor, esMetadataStorageCtor))
-	//registerRoutePost(mux, "/distil/produce/:pipeline-id", routes.ProduceHandler(pgDataStorageCtor, esMetadataStorageCtor))
+	registerRoutePost(mux, "/distil/fit/:pipeline-id", routes.FitHandler())
+	registerRoutePost(mux, "/distil/produce/:pipeline-id", routes.ProduceHandler())
 
 	// static
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))

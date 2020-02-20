@@ -13,14 +13,11 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package routes
+package model
 
-import (
-	"net/http"
-)
-
-// FitHandler takes in labelled data and trains the specified pipeline.
-func FitHandler() func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-	}
+// Dataset contains basic information about the structure of the dataset as well
+// as the raw learning data.
+type Dataset struct {
+	Variables []string
+	Data      [][]string
 }

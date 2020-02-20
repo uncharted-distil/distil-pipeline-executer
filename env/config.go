@@ -28,12 +28,14 @@ var (
 
 // Config represents the application configuration state loaded from env vars.
 type Config struct {
-	AppPort      string `env:"PORT" envDefault:"8080"`
-	D3MOutputDir string `env:"D3MOUTPUTDIR" envDefault:"outputs"`
-	PipelineD3M  string `env:"PIPELINE_D3M" envDefault:"pipeline.d3m"`
-	PipelineDir  string `env:"PIPELINE_DIR" envDefault:"pipelines"`
-	PipelineJSON string `env:"PIPELINE_JSON" envDefault:"pipeline.json"`
-	VerboseError bool   `env:"VERBOSE_ERROR" envDefault:"false"`
+	AppPort       string `env:"PORT" envDefault:"8080"`
+	D3MOutputDir  string `env:"D3MOUTPUTDIR" envDefault:"outputs"`
+	DatasetDir    string `env:"DATASET_DIR" envDefault:"datasets"`
+	PipelineD3M   string `env:"PIPELINE_D3M" envDefault:"pipeline.d3m"`
+	PipelineDir   string `env:"PIPELINE_DIR" envDefault:"pipelines"`
+	PipelineJSON  string `env:"PIPELINE_JSON" envDefault:"pipeline.json"`
+	PredictionDir string `env:"PREDICTION_DIR" envDefault:"predictions"`
+	VerboseError  bool   `env:"VERBOSE_ERROR" envDefault:"false"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
