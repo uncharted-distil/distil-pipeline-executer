@@ -17,29 +17,17 @@ package routes
 
 import (
 	"net/http"
-	"path"
-	"time"
 
 	"github.com/pkg/errors"
 
-	"github.com/uncharted-distil/distil-compute/metadata"
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
-	"github.com/uncharted-distil/distil-pipeline-executer/util"
+	"github.com/uncharted-distil/distil-pipeline-executer/task"
 )
-
-// PipelineInfo represents a pipeline that can be used for fitting or producing.
-type PipelineInfo struct {
-	PipelineID        string    `json:"pipelineId"`
-	DatasetID         string    `json:"datasetId"`
-	UploadedTimestamp time.Time `json:"uploadedTimestamp"`
-	Fitted            bool      `json:"fitted"`
-	FittedTimestamp   time.Time `json:"fittedTimestamp"`
-}
 
 // PipelinesHandler returns the list of pipelines found in the configured folder.
 func PipelinesHandler(config env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		pipelines, err := getPipelines(config.PipelineDir)
+		pipelines, err := task.GetPipelines(config.PipelineDir)
 		if err != nil {
 			handleError(w, errors.Wrapf(err, "unable to get pipelines from directory '%s'", config.PipelineDir))
 			return
@@ -51,41 +39,4 @@ func PipelinesHandler(config env.Config) func(http.ResponseWriter, *http.Request
 			return
 		}
 	}
-}
-
-func getPipelines(directory string) ([]*PipelineInfo, error) {
-	// a pipeline will be a folder with a dataset doc and a pipeline.d3m file
-	// get all folders in the pipeline folder
-	directories, err := util.GetDirectories(directory)
-	if err != nil {
-		return nil, err
-	}
-
-	// only consider the folders that have the required dataset doc and pipeline files
-	pipelines := make([]*PipelineInfo, 0)
-	for _, d := range directories {
-		isPipeline, isFit := util.IsPipelineDirectory(d)
-		if isPipeline {
-			meta, err := metadata.LoadMetadataFromOriginalSchema(path.Join(d, "datasetDoc.json"), false)
-			if err != nil {
-				return nil, err
-			}
-
-			modTime, _ := util.GetLastModifiedTime(path.Join(d, "pipeline.json"))
-			fitTime := time.Time{}
-			if isFit {
-				fitTime, _ = util.GetLastModifiedTime(path.Join(d, "pipeline.d3m"))
-			}
-
-			pipelines = append(pipelines, &PipelineInfo{
-				PipelineID:        path.Base(d),
-				Fitted:            isFit,
-				UploadedTimestamp: modTime,
-				FittedTimestamp:   fitTime,
-				DatasetID:         meta.ID,
-			})
-		}
-	}
-
-	return pipelines, nil
 }

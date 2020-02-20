@@ -58,6 +58,7 @@ func main() {
 		os.Exit(1)
 	}
 	log.Infof("%+v", spew.Sdump(config))
+	env.Initialize(config)
 
 	// register routes
 	mux := goji.NewMux()

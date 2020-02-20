@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -68,4 +69,52 @@ func GetLastModifiedTime(file string) (time.Time, error) {
 	}
 
 	return fi.ModTime(), nil
+}
+
+// WriteFileWithDirs writes the file and creates any missing directories along
+// the way.
+func WriteFileWithDirs(filename string, data []byte, perm os.FileMode) error {
+
+	dir, _ := filepath.Split(filename)
+
+	// make all dirs up to the destination
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return errors.Wrap(err, "unable to make required directory")
+	}
+
+	// write the file
+	return ioutil.WriteFile(filename, data, perm)
+}
+
+// FileExists checks if a file already exists on disk.
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+// RemoveContents removes the files and directories from the supplied parent.
+func RemoveContents(dir string) error {
+	d, err := os.Open(dir)
+	if err != nil {
+		return errors.Wrap(err, "unable to open directory")
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return errors.Wrap(err, "unable to read directory contents")
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(dir, name))
+		if err != nil {
+			return errors.Wrap(err, "unable to remove file from directory")
+		}
+	}
+	return nil
 }
