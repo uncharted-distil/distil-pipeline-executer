@@ -23,7 +23,18 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-pipeline-executer/env"
 )
+
+var (
+	config *env.Config
+)
+
+// SetConfig sets the configuration values to use.
+func SetConfig(c *env.Config) {
+	config = c
+}
 
 // IsPipelineDirectory checks if a given directory is a D3M pipeline directory
 // and if it is fit.
@@ -31,13 +42,16 @@ func IsPipelineDirectory(directory string) (bool, bool) {
 	// a pipeline directory has a pipeline.d3m and datasetDoc.json files
 	isPipeline := true
 	isFit := false
-	if _, err := os.Stat(path.Join(directory, "datasetDoc.json")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join(directory, compute.D3MDataSchema)); os.IsNotExist(err) {
 		isPipeline = false
 	}
-	if _, err := os.Stat(path.Join(directory, "pipeline.json")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join(directory, config.ProblemFile)); os.IsNotExist(err) {
 		isPipeline = false
 	}
-	if _, err := os.Stat(path.Join(directory, "pipeline.d3m")); err == nil {
+	if _, err := os.Stat(path.Join(directory, config.PipelineJSON)); os.IsNotExist(err) {
+		isPipeline = false
+	}
+	if _, err := os.Stat(path.Join(directory, config.PipelineD3M)); err == nil {
 		isFit = true
 	}
 

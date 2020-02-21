@@ -79,11 +79,12 @@ func GetPipelines(directory string) ([]*PipelineInfo, error) {
 }
 
 // StorePipeline stores a pipeline to disk for future use.
-func StorePipeline(pipelineID string, pipeline []byte, datasetSchema []byte, overwrite bool) error {
+func StorePipeline(pipelineID string, pipeline []byte, datasetSchema []byte, problem []byte, overwrite bool) error {
 	log.Infof("storing pipeline with id '%s'", pipelineID)
 	pipelineFolder := env.ResolvePipelinePath(pipelineID)
 	schemaPath := path.Join(pipelineFolder, compute.D3MDataSchema)
 	pipelinePath := env.ResolvePipelineJSONPath(pipelineID)
+	problemPath := env.ResolveProblemPath(pipelineID)
 
 	// check if already there and if not set to overwrite then error
 	if util.FileExists(schemaPath) {
@@ -100,8 +101,12 @@ func StorePipeline(pipelineID string, pipeline []byte, datasetSchema []byte, ove
 	}
 
 	// write out the schema and pipeline data
-	log.Infof("writing schema and pipeline for id '%s'", pipelineID)
+	log.Infof("writing schema, problem and pipeline for id '%s'", pipelineID)
 	err := util.WriteFileWithDirs(schemaPath, datasetSchema, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	err = util.WriteFileWithDirs(problemPath, problem, os.ModePerm)
 	if err != nil {
 		return err
 	}

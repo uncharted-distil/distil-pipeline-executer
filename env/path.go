@@ -27,6 +27,7 @@ var (
 	pipelineJSONName = ""
 	pipelineD3MName  = ""
 	predictionPath   = ""
+	problemPath      = ""
 	datasetPath      = ""
 
 	initialized = false
@@ -42,6 +43,7 @@ func Initialize(config *Config) error {
 	pipelinePath = config.PipelineDir
 	pipelineJSONName = config.PipelineJSON
 	pipelineD3MName = config.PipelineD3M
+	problemPath = config.ProblemFile
 	datasetPath = config.DatasetDir
 	predictionPath = config.PredictionDir
 
@@ -64,6 +66,12 @@ func ResolvePipelinePath(pipelineID string) string {
 // ResolvePipelineJSONPath returns the path to the json file representing the pipeline.
 func ResolvePipelineJSONPath(pipelineID string) string {
 	return path.Join(pipelinePath, pipelineID, pipelineJSONName)
+}
+
+// ResolveProblemPath returns the path to the file representing the
+// problem for the pipeline.
+func ResolveProblemPath(pipelineID string) string {
+	return path.Join(pipelinePath, pipelineID, problemPath)
 }
 
 // ResolvePipelineD3MPath returns the path pickled fitted pipeline.

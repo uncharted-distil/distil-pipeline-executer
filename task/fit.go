@@ -18,7 +18,6 @@ package task
 import (
 	"fmt"
 	"os/exec"
-	"path"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -26,19 +25,19 @@ import (
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
 )
 
-// Produce produces predictions using the specified model and input data.
-func Produce(pipelineID string, schemaFile string, predictionsID string) error {
-	// run the produce command
-	log.Infof("running produce command using shell")
-	predictionOutput := path.Join(env.ResolvePredictionPath(predictionsID), "predictions.csv")
-	cmd := exec.Command("python3", "runner.py", "runtime", "-v teststatic", "produce",
-		fmt.Sprintf("-t %s", schemaFile),
-		fmt.Sprintf("-f %s", env.ResolvePipelineD3MPath(pipelineID)),
-		fmt.Sprintf("-o %s", predictionOutput))
+// Fit trains the specified model using the provided labelled data.
+func Fit(pipelineID string, schemaFile string, predictionsID string) error {
+	// run the fit command
+	log.Infof("running fit command using shell")
+	cmd := exec.Command("python3", "runner.py", "runtime", "-v teststatic", "fit",
+		fmt.Sprintf("-r %s", env.ResolveProblemPath(pipelineID)),
+		fmt.Sprintf("-i %s", schemaFile),
+		fmt.Sprintf("-p %s", env.ResolvePipelineJSONPath(pipelineID)),
+		fmt.Sprintf("-s %s", env.ResolvePipelineD3MPath(pipelineID)))
 
 	err := cmd.Run()
 	if err != nil {
-		return errors.Wrap(err, "unable to run produce command")
+		return errors.Wrap(err, "unable to run fit command")
 	}
 
 	return nil

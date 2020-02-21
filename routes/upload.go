@@ -29,6 +29,7 @@ import (
 type PipelineUpload struct {
 	DatasetSchema json.RawMessage `json:"datasetSchema"`
 	Pipeline      json.RawMessage `json:"pipeline"`
+	Problem       json.RawMessage `json:"problem"`
 }
 
 // UploadHandler stores a pipeline json file and matching dataset document
@@ -60,8 +61,12 @@ func UploadHandler(pipelinesDir string) func(http.ResponseWriter, *http.Request)
 			handleError(w, errors.Errorf("pipeline not provided in upload"))
 			return
 		}
+		if upload.Problem == nil {
+			handleError(w, errors.Errorf("problem not provided in upload"))
+			return
+		}
 
-		// write out the schema and pipeline in the proper folders
+		// write out the schema, pipeline and problem in the proper folders
 		pipelineJSON, err := upload.Pipeline.MarshalJSON()
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable to marshal pipeline json"))
@@ -72,8 +77,13 @@ func UploadHandler(pipelinesDir string) func(http.ResponseWriter, *http.Request)
 			handleError(w, errors.Wrap(err, "unable to marshal schema json"))
 			return
 		}
+		problemJSON, err := upload.Problem.MarshalJSON()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to marshal problem json"))
+			return
+		}
 
-		err = task.StorePipeline(pipelineID, pipelineJSON, schemaJSON, true)
+		err = task.StorePipeline(pipelineID, pipelineJSON, schemaJSON, problemJSON, true)
 		if err != nil {
 			handleError(w, err)
 			return
