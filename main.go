@@ -28,6 +28,7 @@ import (
 
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
 	"github.com/uncharted-distil/distil-pipeline-executer/routes"
+	"github.com/uncharted-distil/distil-pipeline-executer/util"
 	"github.com/uncharted-distil/distil/api/middleware"
 )
 
@@ -59,6 +60,7 @@ func main() {
 	}
 	log.Infof("%+v", spew.Sdump(config))
 	env.Initialize(&config)
+	util.SetConfig(&config)
 
 	// register routes
 	mux := goji.NewMux()

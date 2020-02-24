@@ -35,7 +35,7 @@ type Config struct {
 	PipelineDir   string `env:"PIPELINE_DIR" envDefault:"pipelines"`
 	PipelineJSON  string `env:"PIPELINE_JSON" envDefault:"pipeline.json"`
 	PredictionDir string `env:"PREDICTION_DIR" envDefault:"predictions"`
-	ProblemFile   string `env:"PROBLEM_FILE" envDefault:"problem.json"`
+	ProblemFile   string `env:"PROBLEM_FILE" envDefault:"problemDoc.json"`
 	VerboseError  bool   `env:"VERBOSE_ERROR" envDefault:"false"`
 }
 
