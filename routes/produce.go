@@ -16,9 +16,13 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -51,10 +55,14 @@ type ImageEncoded struct {
 func (i *ImageDataset) CreateDataset(rootPath string) (*model.Dataset, error) {
 	learningData := make([][]string, 0)
 	for _, im := range i.Images {
-		// decode the image
-		imageRaw, err := base64.StdEncoding.DecodeString(im.Image)
+		// read the image into memory
+		img, err := im.read()
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to decode image '%s'", im.ID)
+			return nil, err
+		}
+		imageRaw, err := toJPEG(&img)
+		if err != nil {
+			return nil, err
 		}
 
 		// store it to disk
@@ -74,6 +82,41 @@ func (i *ImageDataset) CreateDataset(rootPath string) (*model.Dataset, error) {
 		Data:      learningData,
 	}
 	return dataset, nil
+}
+
+func (i *ImageEncoded) read() (image.Image, error) {
+	// decode the image
+	imageRaw, err := base64.StdEncoding.DecodeString(i.Image)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to decode image '%s'", i.ID)
+	}
+
+	switch i.Type {
+	case "png":
+		return png.Decode(bytes.NewReader(imageRaw))
+	case "jpg", "jpeg":
+		return jpeg.Decode(bytes.NewReader(imageRaw))
+	default:
+		return nil, errors.Errorf("unsupported image type '%s'", i.Type)
+	}
+}
+
+func toJPEG(img *image.Image) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	if err := jpeg.Encode(buf, *img, nil); err != nil {
+		return nil, errors.Wrap(err, "unable to encode jpg")
+	}
+
+	return buf.Bytes(), nil
+}
+
+func toPNG(img *image.Image) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	if err := png.Encode(buf, *img); err != nil {
+		return nil, errors.Wrap(err, "unable to encode png")
+	}
+
+	return buf.Bytes(), nil
 }
 
 // ProduceHandler takes in unlabelled data and generates predictions using

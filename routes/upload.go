@@ -16,7 +16,9 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -38,58 +40,78 @@ func UploadHandler(pipelinesDir string) func(http.ResponseWriter, *http.Request)
 	return func(w http.ResponseWriter, r *http.Request) {
 		pipelineID := pat.Param(r, "pipeline-id")
 
-		// need the pipeline in json form as well as the full dataset doc
-		requestBody, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-		defer r.Body.Close()
+		// type cant be a post param since the upload is the actual data
+		queryValues := r.URL.Query()
+		typ := queryValues.Get("type")
 
-		var upload PipelineUpload
-		err = json.Unmarshal(requestBody, &upload)
-		if err != nil {
-			handleError(w, err)
-			return
+		if typ == "fitted" {
+			// read the file from the request
+			data, err := receiveFile(r)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to receive file from request"))
+				return
+			}
+
+			err = task.UpdatePipeline(pipelineID, data, true)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+		} else {
+
+			// need the pipeline in json form as well as the full dataset doc
+			requestBody, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+			defer r.Body.Close()
+
+			var upload PipelineUpload
+			err = json.Unmarshal(requestBody, &upload)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
+
+			if upload.DatasetSchema == nil {
+				handleError(w, errors.Errorf("dataset schema not provided in upload"))
+				return
+			}
+			if upload.Pipeline == nil {
+				handleError(w, errors.Errorf("pipeline not provided in upload"))
+				return
+			}
+			if upload.Problem == nil {
+				handleError(w, errors.Errorf("problem not provided in upload"))
+				return
+			}
+
+			// write out the schema, pipeline and problem in the proper folders
+			pipelineJSON, err := upload.Pipeline.MarshalJSON()
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to marshal pipeline json"))
+				return
+			}
+			schemaJSON, err := upload.DatasetSchema.MarshalJSON()
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to marshal schema json"))
+				return
+			}
+			problemJSON, err := upload.Problem.MarshalJSON()
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to marshal problem json"))
+				return
+			}
+
+			err = task.StorePipeline(pipelineID, pipelineJSON, schemaJSON, problemJSON, true)
+			if err != nil {
+				handleError(w, err)
+				return
+			}
 		}
 
-		if upload.DatasetSchema == nil {
-			handleError(w, errors.Errorf("dataset schema not provided in upload"))
-			return
-		}
-		if upload.Pipeline == nil {
-			handleError(w, errors.Errorf("pipeline not provided in upload"))
-			return
-		}
-		if upload.Problem == nil {
-			handleError(w, errors.Errorf("problem not provided in upload"))
-			return
-		}
-
-		// write out the schema, pipeline and problem in the proper folders
-		pipelineJSON, err := upload.Pipeline.MarshalJSON()
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to marshal pipeline json"))
-			return
-		}
-		schemaJSON, err := upload.DatasetSchema.MarshalJSON()
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to marshal schema json"))
-			return
-		}
-		problemJSON, err := upload.Problem.MarshalJSON()
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to marshal problem json"))
-			return
-		}
-
-		err = task.StorePipeline(pipelineID, pipelineJSON, schemaJSON, problemJSON, true)
-		if err != nil {
-			handleError(w, err)
-			return
-		}
-
-		err = handleJSON(w, map[string]interface{}{
+		err := handleJSON(w, map[string]interface{}{
 			"pipelineID": pipelineID,
 			"result":     "success",
 		})
@@ -98,4 +120,21 @@ func UploadHandler(pipelinesDir string) func(http.ResponseWriter, *http.Request)
 			return
 		}
 	}
+}
+
+func receiveFile(r *http.Request) ([]byte, error) {
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get file from request")
+	}
+	defer file.Close()
+
+	// Copy the file data to the buffer
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, file)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to copy file")
+	}
+
+	return buf.Bytes(), nil
 }

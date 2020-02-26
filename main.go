@@ -68,6 +68,7 @@ func main() {
 	mux.Use(middleware.Gzip)
 
 	routes.SetVerboseError(config.VerboseError)
+
 	// GET
 	registerRoute(mux, "/distil/pipelines", routes.PipelinesHandler(config))
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp))
@@ -75,6 +76,7 @@ func main() {
 	// POST
 	registerRoutePost(mux, "/distil/fit/:pipeline-id", routes.FitHandler())
 	registerRoutePost(mux, "/distil/produce/:pipeline-id", routes.ProduceHandler())
+	registerRoutePost(mux, "/distil/upload/:pipeline-id", routes.UploadHandler(config.PipelineDir))
 
 	// static
 	registerRoute(mux, "/*", routes.FileHandler("./dist"))

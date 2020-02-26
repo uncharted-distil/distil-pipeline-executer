@@ -118,3 +118,24 @@ func StorePipeline(pipelineID string, pipeline []byte, datasetSchema []byte, pro
 
 	return nil
 }
+
+// UpdatePipeline updates either a fitted pipeline or a raw pipeline.
+func UpdatePipeline(pipelineID string, pipeline []byte, isFitted bool) error {
+	log.Infof("updating pipeline with id '%s'", pipelineID)
+	pipelinePath := ""
+	if isFitted {
+		pipelinePath = env.ResolvePipelineD3MPath(pipelineID)
+	} else {
+		pipelinePath = env.ResolvePipelineJSONPath(pipelineID)
+	}
+
+	// write out the schema and pipeline data
+	log.Infof("writing pipeline for id '%s'", pipelineID)
+	err := util.WriteFileWithDirs(pipelinePath, pipeline, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	log.Infof("done writing out pipeline '%s'", pipelineID)
+
+	return nil
+}
