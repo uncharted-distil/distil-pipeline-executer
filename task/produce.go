@@ -28,7 +28,7 @@ import (
 )
 
 // Produce produces predictions using the specified model and input data.
-func Produce(pipelineID string, schemaFile string, predictionsID string, config *env.Config) error {
+func Produce(pipelineID string, schemaFile string, predictionsID string, config *env.Config) (string, error) {
 	// run the produce command
 	log.Infof("running produce command using shell")
 	predictionOutput := path.Join(env.ResolvePredictionPath(predictionsID), "predictions.csv")
@@ -44,8 +44,9 @@ func Produce(pipelineID string, schemaFile string, predictionsID string, config 
 	log.Infof("out: %s", stdout.String())
 	if err != nil {
 		log.Errorf("err: %s", stderr.String())
-		return errors.Wrap(err, "unable to run produce command")
+		return "", errors.Wrap(err, "unable to run produce command")
 	}
+	log.Infof("produce output written to '%s'", predictionOutput)
 
-	return nil
+	return predictionOutput, nil
 }

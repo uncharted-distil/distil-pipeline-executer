@@ -18,6 +18,7 @@ package routes
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -50,6 +51,12 @@ type ImageEncoded struct {
 	Type  string `json:"type"`
 	Image string `json:"image"`
 	Label string `json:"label"`
+}
+
+// Prediction is a result from a produce call.
+type Prediction struct {
+	ID    string `json:"id"`
+	Value string `json:"value"`
 }
 
 // CreateDataset creates a basic dataset from an image dataset
@@ -151,9 +158,40 @@ func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request)
 		}
 
 		// run predictions on the newly created dataset
-		err = task.Produce(pipelineID, schemaPath, images.ID, config)
+		outputFile, err := task.Produce(pipelineID, schemaPath, images.ID, config)
 		if err != nil {
 			handleError(w, err)
+			return
+		}
+
+		// read the output
+		file, err := os.Open(outputFile)
+		if err != nil {
+			handleError(w, err)
+			return
+		}
+		reader := csv.NewReader(file)
+		predictionsRaw, err := reader.ReadAll()
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable to read produce output"))
+			return
+		}
+
+		// create the prediction output (skipping header)
+		output := make([]*Prediction, 0)
+		for _, p := range predictionsRaw[1:] {
+			output = append(output, &Prediction{
+				ID:    p[0],
+				Value: p[1],
+			})
+		}
+
+		err = handleJSON(w, map[string]interface{}{
+			"pipelineID":  pipelineID,
+			"predictions": output,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal produce result into JSON"))
 			return
 		}
 	}
