@@ -16,6 +16,7 @@
 package task
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"path"
@@ -31,15 +32,18 @@ func Produce(pipelineID string, schemaFile string, predictionsID string, config 
 	// run the produce command
 	log.Infof("running produce command using shell")
 	predictionOutput := path.Join(env.ResolvePredictionPath(predictionsID), "predictions.csv")
-	cmd := exec.Command("python3", "runner.py", "runtime",
-		fmt.Sprintf("-v %s", config.D3MStaticDir),
-		"produce",
-		fmt.Sprintf("-t %s", schemaFile),
-		fmt.Sprintf("-f %s", env.ResolvePipelineD3MPath(pipelineID)),
-		fmt.Sprintf("-o %s", predictionOutput))
+	commandLine := fmt.Sprintf("python3 runner.py runtime -v %s produce -t %s -f %s -o %s", config.D3MStaticDir, schemaFile, env.ResolvePipelineD3MPath(pipelineID), predictionOutput)
+	cmd := exec.Command("bin/sh", "-c", commandLine)
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
 	err := cmd.Run()
+	log.Infof("out: %s", stdout.String())
 	if err != nil {
+		log.Errorf("err: %s", stderr.String())
 		return errors.Wrap(err, "unable to run produce command")
 	}
 

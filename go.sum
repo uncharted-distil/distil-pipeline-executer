@@ -62,7 +62,9 @@ github.com/onsi/ginkgo v1.10.3/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+
 github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7JYyY=
 github.com/otiai10/copy v1.0.2 h1:DDNipYy6RkIkjMwy+AWzgKiNTyj2RUI9yEMeETEpVyc=
 github.com/otiai10/copy v1.0.2/go.mod h1:c7RpqBkwMom4bYTSkLSym4VSJz/XtncWRAj/J4PEIMY=
+github.com/otiai10/curr v0.0.0-20150429015615-9b4961190c95 h1:+OLn68pqasWca0z5ryit9KGfp3sUsW4Lqg32iRMJyzs=
 github.com/otiai10/curr v0.0.0-20150429015615-9b4961190c95/go.mod h1:9qAhocn7zKJG+0mI8eUu6xqkFDYS2kb2saOteoSB3cE=
+github.com/otiai10/mint v1.3.0 h1:Ady6MKVezQwHBkGzLFbrsywyp09Ah7rkmfjV3Bcr5uc=
 github.com/otiai10/mint v1.3.0/go.mod h1:F5AjcsTsWUqX+Na9fpHb52P8pcRX2CI6A3ctIT91xUo=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
@@ -83,8 +85,8 @@ github.com/uncharted-distil/distil v0.0.0-20200214202446-d1bbf3a2728e h1:kChax/1
 github.com/uncharted-distil/distil v0.0.0-20200214202446-d1bbf3a2728e/go.mod h1:d86SEj9Ot/hG0potOMdR1dQ6kf/+NKPGZN2nEPu82cQ=
 github.com/uncharted-distil/distil-compute v0.0.0-20200214201950-6fd0d427f4f1 h1:fU999UgjFdOnRwseZDrThs9mCJFTh1UMtkfooMPfAiY=
 github.com/uncharted-distil/distil-compute v0.0.0-20200214201950-6fd0d427f4f1/go.mod h1:0OFz5vP7mV1nuvKvINOG7hdz8YU0+rWhjppdYBzOSew=
-github.com/uncharted-distil/distil-compute v0.0.0-20200219204943-44fee27d5749 h1:ufYyOxk8p/TivrNkeU0pNPPrTp6i1pmv+VR1OP+NYUE=
-github.com/uncharted-distil/distil-compute v0.0.0-20200219204943-44fee27d5749/go.mod h1:0OFz5vP7mV1nuvKvINOG7hdz8YU0+rWhjppdYBzOSew=
+github.com/uncharted-distil/distil-compute v0.0.0-20200227185621-e7a03bf96d76 h1:kpV8clHp11urCTGN4oEQbERogAsDfknYEluwThnZR94=
+github.com/uncharted-distil/distil-compute v0.0.0-20200227185621-e7a03bf96d76/go.mod h1:0OFz5vP7mV1nuvKvINOG7hdz8YU0+rWhjppdYBzOSew=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9 h1:P1B7OAnmyIdSN9UGhDvIU3s8K3/2rQcvntYV5WPi+qY=
 github.com/unchartedsoftware/plog v0.0.0-20170413154239-34d2bbd3c0a9/go.mod h1:PrytgQ5GjTc6Z5/pbL5vj1UhD716wDobDeimrd7lRKY=
 github.com/vova616/xxhash v0.0.0-20130313230233-f0a9a8b74d48 h1:XYef2jcFEKziHl4rv/21jrNeQg6Z3gL345u16fHWVDo=
