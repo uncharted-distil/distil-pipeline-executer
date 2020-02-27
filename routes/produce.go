@@ -32,6 +32,7 @@ import (
 	"goji.io/v3/pat"
 
 	cm "github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-pipeline-executer/env"
 	"github.com/uncharted-distil/distil-pipeline-executer/model"
 	"github.com/uncharted-distil/distil-pipeline-executer/task"
 	"github.com/uncharted-distil/distil-pipeline-executer/util"
@@ -121,7 +122,7 @@ func toPNG(img *image.Image) ([]byte, error) {
 
 // ProduceHandler takes in unlabelled data and generates predictions using
 // a fitted model.
-func ProduceHandler() func(http.ResponseWriter, *http.Request) {
+func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pipelineID := pat.Param(r, "pipeline-id")
 		//typ := pat.Param(r, "type")
@@ -135,7 +136,7 @@ func ProduceHandler() func(http.ResponseWriter, *http.Request) {
 		}
 		defer r.Body.Close()
 
-		var images *ImageDataset
+		images := &ImageDataset{}
 		err = json.Unmarshal(requestBody, images)
 		if err != nil {
 			handleError(w, errors.Wrapf(err, "unable to parse json"))
@@ -150,7 +151,7 @@ func ProduceHandler() func(http.ResponseWriter, *http.Request) {
 		}
 
 		// run predictions on the newly created dataset
-		err = task.Produce(pipelineID, schemaPath, images.ID)
+		err = task.Produce(pipelineID, schemaPath, images.ID, config)
 		if err != nil {
 			handleError(w, err)
 			return

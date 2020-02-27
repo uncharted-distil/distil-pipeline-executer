@@ -19,10 +19,10 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 
+	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 
 	"github.com/uncharted-distil/distil-compute/metadata"
@@ -30,6 +30,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
 	"github.com/uncharted-distil/distil-pipeline-executer/model"
+	"github.com/uncharted-distil/distil/api/util"
 )
 
 // DatasetConstructor is used to build a dataset.
@@ -74,12 +75,12 @@ func CreateDataset(pipelineID string, predictionsID string, datasetCtor DatasetC
 	writerOutput := csv.NewWriter(outputBytes)
 	err = writerOutput.WriteAll(augmentedData)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "unable to write augmented data")
 	}
 	writerOutput.Flush()
-	err = ioutil.WriteFile(path.Join(datasetPath, mainDR.ResPath), outputBytes.Bytes(), os.ModePerm)
+	err = util.WriteFileWithDirs(path.Join(datasetPath, mainDR.ResPath), outputBytes.Bytes(), os.ModePerm)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "unable to write augmented data to disk")
 	}
 
 	// store updated metadata
@@ -120,7 +121,7 @@ func augmentPredictionDataset(dataset *model.Dataset, variables []*cm.Variable) 
 	}
 
 	// write the header
-	output := make([][]string, 0)
+	output := make([][]string, len(dataset.Data)+1)
 	output[0] = headerSource
 
 	// read the rest of the data

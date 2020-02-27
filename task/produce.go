@@ -27,11 +27,13 @@ import (
 )
 
 // Produce produces predictions using the specified model and input data.
-func Produce(pipelineID string, schemaFile string, predictionsID string) error {
+func Produce(pipelineID string, schemaFile string, predictionsID string, config *env.Config) error {
 	// run the produce command
 	log.Infof("running produce command using shell")
 	predictionOutput := path.Join(env.ResolvePredictionPath(predictionsID), "predictions.csv")
-	cmd := exec.Command("python3", "runner.py", "runtime", "-v teststatic", "produce",
+	cmd := exec.Command("python3", "runner.py", "runtime",
+		fmt.Sprintf("-v %s", config.D3MStaticDir),
+		"produce",
 		fmt.Sprintf("-t %s", schemaFile),
 		fmt.Sprintf("-f %s", env.ResolvePipelineD3MPath(pipelineID)),
 		fmt.Sprintf("-o %s", predictionOutput))

@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-pipeline-executer/task"
@@ -35,15 +36,15 @@ func FitHandler() func(http.ResponseWriter, *http.Request) {
 		// parse the input data
 		requestBody, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			handleError(w, err)
+			handleError(w, errors.Wrapf(err, "unable to read request body"))
 			return
 		}
 		defer r.Body.Close()
 
-		var images *ImageDataset
+		images := &ImageDataset{}
 		err = json.Unmarshal(requestBody, images)
 		if err != nil {
-			handleError(w, err)
+			handleError(w, errors.Wrapf(err, "unable to parse json"))
 			return
 		}
 
