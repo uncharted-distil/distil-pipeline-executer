@@ -130,7 +130,7 @@ func ProduceHandler() func(http.ResponseWriter, *http.Request) {
 		// parse the input data
 		requestBody, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			handleError(w, err)
+			handleError(w, errors.Wrapf(err, "unable to read request body"))
 			return
 		}
 		defer r.Body.Close()
@@ -138,7 +138,7 @@ func ProduceHandler() func(http.ResponseWriter, *http.Request) {
 		var images *ImageDataset
 		err = json.Unmarshal(requestBody, images)
 		if err != nil {
-			handleError(w, err)
+			handleError(w, errors.Wrapf(err, "unable to parse json"))
 			return
 		}
 
