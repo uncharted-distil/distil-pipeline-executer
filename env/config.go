@@ -29,6 +29,7 @@ var (
 // Config represents the application configuration state loaded from env vars.
 type Config struct {
 	AppPort       string `env:"PORT" envDefault:"8080"`
+	ClearDataset  bool   `env:"CLEAR_DATASET" envDefault:"true"`
 	D3MOutputDir  string `env:"D3MOUTPUTDIR" envDefault:"outputs"`
 	D3MStaticDir  string `env:"D3MSTATICDIR" envDefault:"/data/static_resources"`
 	DatasetDir    string `env:"DATASET_DIR" envDefault:"datasets"`

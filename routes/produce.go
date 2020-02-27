@@ -186,6 +186,14 @@ func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request)
 			})
 		}
 
+		if config.ClearDataset {
+			err = task.ClearDataset(pipelineID, images.ID)
+			if err != nil {
+				handleError(w, errors.Wrap(err, "unable to read produce output"))
+				return
+			}
+		}
+
 		err = handleJSON(w, map[string]interface{}{
 			"pipelineId":   pipelineID,
 			"predictionId": images.ID,
