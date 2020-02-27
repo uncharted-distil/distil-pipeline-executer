@@ -74,7 +74,7 @@ func main() {
 	registerRoute(mux, "/distil/config", routes.ConfigHandler(config, version, timestamp))
 
 	// POST
-	registerRoutePost(mux, "/distil/fit/:pipeline-id", routes.FitHandler())
+	registerRoutePost(mux, "/distil/fit/:pipeline-id", routes.FitHandler(&config))
 	registerRoutePost(mux, "/distil/produce/:pipeline-id", routes.ProduceHandler(&config))
 	registerRoutePost(mux, "/distil/upload/:pipeline-id", routes.UploadHandler(config.PipelineDir))
 

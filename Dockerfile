@@ -20,6 +20,8 @@ RUN mkdir /data/datasets
 RUN mkdir /data/predictions
 RUN mkdir /data/outputs
 ENV PIPELINE_DIR=/data/pipelines
+ENV DATASET_DIR=/data/datasets
+ENV PREDICTION_DIR=/data/predictions
 
 # need the resnet static file
 RUN mkdir /data/static_resources

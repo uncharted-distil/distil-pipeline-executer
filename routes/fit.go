@@ -23,11 +23,12 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-pipeline-executer/env"
 	"github.com/uncharted-distil/distil-pipeline-executer/task"
 )
 
 // FitHandler takes in labelled data and trains the specified pipeline.
-func FitHandler() func(http.ResponseWriter, *http.Request) {
+func FitHandler(config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pipelineID := pat.Param(r, "pipeline-id")
 		//typ := pat.Param(r, "type")
@@ -56,7 +57,7 @@ func FitHandler() func(http.ResponseWriter, *http.Request) {
 		}
 
 		// run predictions on the newly created dataset
-		err = task.Fit(pipelineID, schemaPath, images.ID)
+		err = task.Fit(pipelineID, schemaPath, images.ID, config)
 		if err != nil {
 			handleError(w, err)
 			return

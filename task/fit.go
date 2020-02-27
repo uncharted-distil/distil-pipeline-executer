@@ -16,6 +16,7 @@
 package task
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 
@@ -26,17 +27,23 @@ import (
 )
 
 // Fit trains the specified model using the provided labelled data.
-func Fit(pipelineID string, schemaFile string, predictionsID string) error {
+func Fit(pipelineID string, schemaFile string, predictionsID string, config *env.Config) error {
 	// run the fit command
 	log.Infof("running fit command using shell")
-	cmd := exec.Command("python3", "runner.py", "runtime", "-v teststatic", "fit",
-		fmt.Sprintf("-r %s", env.ResolveProblemPath(pipelineID)),
-		fmt.Sprintf("-i %s", schemaFile),
-		fmt.Sprintf("-p %s", env.ResolvePipelineJSONPath(pipelineID)),
-		fmt.Sprintf("-s %s", env.ResolvePipelineD3MPath(pipelineID)))
+	commandLine := fmt.Sprintf("python3 runner.py runtime -v %s fit -r %s -i %s -p %s -s %s",
+		config.D3MStaticDir, env.ResolveProblemPath(pipelineID), schemaFile,
+		env.ResolvePipelineJSONPath(pipelineID), env.ResolvePipelineD3MPath(pipelineID))
+	cmd := exec.Command("/bin/sh", "-c", commandLine)
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
 	err := cmd.Run()
+	log.Infof("out: %s", stdout.String())
 	if err != nil {
+		log.Errorf("err: %s", stderr.String())
 		return errors.Wrap(err, "unable to run fit command")
 	}
 
