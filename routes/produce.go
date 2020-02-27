@@ -187,8 +187,9 @@ func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request)
 		}
 
 		err = handleJSON(w, map[string]interface{}{
-			"pipelineID":  pipelineID,
-			"predictions": output,
+			"pipelineId":   pipelineID,
+			"predictionId": images.ID,
+			"predictions":  output,
 		})
 		if err != nil {
 			handleError(w, errors.Wrap(err, "unable marshal produce result into JSON"))

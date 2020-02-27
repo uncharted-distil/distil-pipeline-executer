@@ -18,6 +18,7 @@ package task
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"path"
 
@@ -31,7 +32,16 @@ import (
 func Produce(pipelineID string, schemaFile string, predictionsID string, config *env.Config) (string, error) {
 	// run the produce command
 	log.Infof("running produce command using shell")
-	predictionOutput := path.Join(env.ResolvePredictionPath(predictionsID), "predictions.csv")
+
+	// need to make the output folder for the predictions
+	predictionsDir := env.ResolvePredictionPath(predictionsID)
+	predictionOutput := path.Join(predictionsDir, "predictions.csv")
+	err := os.MkdirAll(predictionsDir, os.ModePerm)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to create predictions output folder")
+	}
+	log.Infof("predictions output folder created ('%s')", predictionsDir)
+
 	commandLine := fmt.Sprintf("python3 runner.py runtime -v %s produce -t %s -f %s -o %s", config.D3MStaticDir, schemaFile, env.ResolvePipelineD3MPath(pipelineID), predictionOutput)
 	cmd := exec.Command("/bin/sh", "-c", commandLine)
 
@@ -40,7 +50,7 @@ func Produce(pipelineID string, schemaFile string, predictionsID string, config 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	log.Infof("out: %s", stdout.String())
 	if err != nil {
 		log.Errorf("err: %s", stderr.String())
