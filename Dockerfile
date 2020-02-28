@@ -28,7 +28,6 @@ RUN mkdir /data/static_resources
 ENV D3MSTATICDIR=/data/static_resources
 COPY 5c106cde386e87d4033832f2996f5493238eda96ccf559d1d62760c4de0613f8 /data/static_resources/5c106cde386e87d4033832f2996f5493238eda96ccf559d1d62760c4de0613f8
 
-COPY 22_handgeometry /data/pipelines/22_handgeometry
 COPY tattoo /data/pipelines/tattoo
 
 CMD ["/app/distil"]

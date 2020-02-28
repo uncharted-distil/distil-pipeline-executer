@@ -41,7 +41,7 @@ type DatasetConstructor interface {
 // CreateDataset creates a dataset that can be used for fitting a pipeline or
 // producing predictions from a pipeline.
 func CreateDataset(pipelineID string, predictionsID string, datasetCtor DatasetConstructor) (string, error) {
-	log.Infof("creating fitting dataset for pipeline '%s' using prediction id '%s'", pipelineID, predictionsID)
+	log.Infof("creating dataset for pipeline '%s' using prediction id '%s'", pipelineID, predictionsID)
 	// create the raw dataset from the input
 	datasetPath := env.ResolveDatasetPath(predictionsID)
 	dataset, err := datasetCtor.CreateDataset(datasetPath)

@@ -37,6 +37,7 @@ import (
 	"github.com/uncharted-distil/distil-pipeline-executer/model"
 	"github.com/uncharted-distil/distil-pipeline-executer/task"
 	"github.com/uncharted-distil/distil-pipeline-executer/util"
+	log "github.com/unchartedsoftware/plog"
 )
 
 // ImageDataset captures the data in an image dataset.
@@ -61,8 +62,9 @@ type Prediction struct {
 
 // CreateDataset creates a basic dataset from an image dataset
 func (i *ImageDataset) CreateDataset(rootPath string) (*model.Dataset, error) {
-	learningData := make([][]string, 0)
-	for _, im := range i.Images {
+	learningData := make([][]string, len(i.Images))
+	mediaPath := path.Join(rootPath, "media")
+	for index, im := range i.Images {
 		// read the image into memory
 		img, err := im.read()
 		if err != nil {
@@ -75,14 +77,14 @@ func (i *ImageDataset) CreateDataset(rootPath string) (*model.Dataset, error) {
 
 		// store it to disk
 		imageName := fmt.Sprintf("%s.%s", im.ID, im.Type)
-		imagePath := path.Join(rootPath, "media", imageName)
+		imagePath := path.Join(mediaPath, imageName)
 		err = util.WriteFileWithDirs(imagePath, imageRaw, os.ModePerm)
 		if err != nil {
 			return nil, err
 		}
 
 		// add the relevant row to the learning data
-		learningData = append(learningData, []string{im.ID, imageName, im.Label})
+		learningData[index] = []string{im.ID, imageName, im.Label}
 	}
 
 	dataset := &model.Dataset{
@@ -132,6 +134,7 @@ func toPNG(img *image.Image) ([]byte, error) {
 func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pipelineID := pat.Param(r, "pipeline-id")
+		log.Infof("produce request received for pipeline '%s'", pipelineID)
 		//typ := pat.Param(r, "type")
 		//format := pat.Param(r, "format")
 
@@ -143,6 +146,7 @@ func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request)
 		}
 		defer r.Body.Close()
 
+		log.Infof("unmarshalling request body")
 		images := &ImageDataset{}
 		err = json.Unmarshal(requestBody, images)
 		if err != nil {
@@ -165,6 +169,7 @@ func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request)
 		}
 
 		// read the output
+		log.Infof("processing produce output")
 		file, err := os.Open(outputFile)
 		if err != nil {
 			handleError(w, err)
