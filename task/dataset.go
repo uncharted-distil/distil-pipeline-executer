@@ -152,14 +152,17 @@ func augmentPredictionDataset(dataset *model.Dataset, variables []*cm.Variable) 
 
 // ClearDataset deletes the dataset and prediction data.
 func ClearDataset(pipelineID string, predictionID string) error {
+	log.Infof("clearing dataset and prediction info for pipeline '%s' and prediction '%s'", pipelineID, predictionID)
 	predictionsDir := env.ResolvePredictionPath(predictionID)
 	datasetDir := env.ResolveDatasetPath(predictionID)
 
 	// delete dataset directory & prediction directory
+	log.Infof("deleting prediction content found in '%s'", predictionsDir)
 	err := util.RemoveContents(predictionsDir)
 	if err != nil {
 		return err
 	}
+	log.Infof("deleting dataset content found in '%s'", datasetDir)
 	err = util.RemoveContents(datasetDir)
 	if err != nil {
 		return err
