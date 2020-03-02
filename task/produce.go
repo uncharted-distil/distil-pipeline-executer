@@ -17,19 +17,25 @@ package task
 
 import (
 	"bytes"
+	"encoding/csv"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
+	"github.com/uncharted-distil/distil-compute/model"
+	"github.com/uncharted-distil/distil-compute/primitive/compute"
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
+	"github.com/uncharted-distil/distil-pipeline-executer/util"
 )
 
 // Produce produces predictions using the specified model and input data.
-func Produce(pipelineID string, schemaFile string, predictionsID string, config *env.Config) (string, error) {
+func Produce(pipelineID string, schemaFile string, predictionsID string, config *env.Config) ([][]string, error) {
 	// run the produce command
 	log.Infof("running produce command using shell")
 
@@ -38,7 +44,7 @@ func Produce(pipelineID string, schemaFile string, predictionsID string, config 
 	predictionOutput := path.Join(predictionsDir, "predictions.csv")
 	err := os.MkdirAll(predictionsDir, os.ModePerm)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable to create predictions output folder")
+		return nil, errors.Wrapf(err, "unable to create predictions output folder")
 	}
 	log.Infof("predictions output folder created ('%s')", predictionsDir)
 
@@ -54,9 +60,77 @@ func Produce(pipelineID string, schemaFile string, predictionsID string, config 
 	log.Infof("out: %s", stdout.String())
 	if err != nil {
 		log.Errorf("err: %s", stderr.String())
-		return "", errors.Wrap(err, "unable to run produce command")
+		return nil, errors.Wrap(err, "unable to run produce command")
 	}
 	log.Infof("produce output written to '%s'", predictionOutput)
 
-	return predictionOutput, nil
+	return util.ReadCSVFile(predictionOutput, true)
+}
+
+// ProduceBatch runs the produce command in batches. Predictions are then returned as they complete.
+func ProduceBatch(pipelineID string, schemaFile string, predictionsID string, queue *Queue, config *env.Config) ([][]string, error) {
+	batchSize := config.BatchSize
+	rootDatasetPath := env.ResolveDatasetPath(predictionsID)
+
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFile, false)
+	if err != nil {
+		return nil, err
+	}
+
+	output := make([][]string, 0)
+	count := 1
+	for {
+		batch := queue.RemoveEntries(predictionsID, batchSize)
+		if len(batch) == 0 {
+			break
+		}
+		batchID := fmt.Sprintf("batch-%d", count)
+
+		// write the batch to disk
+		batchPath, err := writeBatch(meta, rootDatasetPath, batchID, batch)
+		if err != nil {
+			return nil, err
+		}
+		batchPathRelative := strings.Replace(batchPath, rootDatasetPath, "", 1)
+
+		// update the metadata
+		mainDR := meta.GetMainDataResource()
+		mainDR.ResPath = batchPathRelative
+
+		// write the metadata for the batch
+		err = metadata.WriteSchema(meta, schemaFile, false)
+		if err != nil {
+			return nil, err
+		}
+
+		// produce predictions for the batch
+		batchOutput, err := Produce(pipelineID, schemaFile, predictionsID, config)
+		if err != nil {
+			return nil, err
+		}
+
+		// merge all predictions
+		output = append(output, batchOutput...)
+	}
+
+	return output, nil
+}
+
+func writeBatch(meta *model.Metadata, datasetPath string, batchID string, data [][]string) (string, error) {
+	// get batch data folder
+	batchOutputPath := path.Join(datasetPath, batchID, compute.D3MLearningData)
+	log.Infof("storing batch to '%s'", batchOutputPath)
+	outputBytes := &bytes.Buffer{}
+	writerOutput := csv.NewWriter(outputBytes)
+	err := writerOutput.WriteAll(data)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to write batch data")
+	}
+	writerOutput.Flush()
+	err = util.WriteFileWithDirs(batchOutputPath, outputBytes.Bytes(), os.ModePerm)
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to write batch data to disk")
+	}
+
+	return batchOutputPath, nil
 }
