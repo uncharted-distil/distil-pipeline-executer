@@ -20,9 +20,21 @@ type Queue struct {
 	datasets map[string][][]string
 }
 
+// NewQueue creates a new queue.
+func NewQueue() *Queue {
+	return &Queue{
+		datasets: make(map[string][][]string),
+	}
+}
+
 // AddDataset adds a dataset to the queue.
 func (q *Queue) AddDataset(dataset string) {
 	q.datasets[dataset] = make([][]string, 0)
+}
+
+// GetLength returns the count of entries in the queue for the specified dataset.
+func (q *Queue) GetLength(dataset string) int {
+	return len(q.datasets[dataset])
 }
 
 // AddEntry adds a row to the dataset queue.
@@ -50,6 +62,7 @@ func (q *Queue) RemoveEntries(dataset string, count int) [][]string {
 
 	entries := datasetData[:count]
 	datasetData = datasetData[count:]
+	q.datasets[dataset] = datasetData
 
 	return entries
 }

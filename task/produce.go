@@ -23,6 +23,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/unchartedsoftware/plog"
@@ -69,6 +70,7 @@ func Produce(pipelineID string, schemaFile string, predictionsID string, config 
 
 // ProduceBatch runs the produce command in batches. Predictions are then returned as they complete.
 func ProduceBatch(pipelineID string, schemaFile string, predictionsID string, queue *Queue, config *env.Config) ([][]string, error) {
+	log.Infof("producing predictions using batches")
 	batchSize := config.BatchSize
 	rootDatasetPath := env.ResolveDatasetPath(predictionsID)
 
@@ -79,19 +81,23 @@ func ProduceBatch(pipelineID string, schemaFile string, predictionsID string, qu
 
 	output := make([][]string, 0)
 	count := 1
+	currentTimeTaken := 10 * time.Second
 	for {
 		batch := queue.RemoveEntries(predictionsID, batchSize)
 		if len(batch) == 0 {
 			break
 		}
 		batchID := fmt.Sprintf("batch-%d", count)
+		log.Infof("pulled %d entries into a batch using id '%s' (%d remaining)", len(batch), batchID, queue.GetLength(predictionsID))
 
 		// write the batch to disk
 		batchPath, err := writeBatch(meta, rootDatasetPath, batchID, batch)
 		if err != nil {
 			return nil, err
 		}
-		batchPathRelative := strings.Replace(batchPath, rootDatasetPath, "", 1)
+
+		// remove the leading / from the relative path
+		batchPathRelative := strings.Replace(batchPath, rootDatasetPath, "", 1)[1:]
 
 		// update the metadata
 		mainDR := meta.GetMainDataResource()
@@ -104,13 +110,20 @@ func ProduceBatch(pipelineID string, schemaFile string, predictionsID string, qu
 		}
 
 		// produce predictions for the batch
+		produceStart := time.Now()
 		batchOutput, err := Produce(pipelineID, schemaFile, predictionsID, config)
 		if err != nil {
 			return nil, err
 		}
+		produceEnd := time.Now()
 
 		// merge all predictions
 		output = append(output, batchOutput...)
+
+		count = count + 1
+		previousTimeTaken := currentTimeTaken
+		currentTimeTaken = produceEnd.Sub(produceStart)
+		batchSize = adjustBatchSize(config, float64(batchSize), previousTimeTaken, currentTimeTaken)
 	}
 
 	return output, nil
@@ -122,7 +135,12 @@ func writeBatch(meta *model.Metadata, datasetPath string, batchID string, data [
 	log.Infof("storing batch to '%s'", batchOutputPath)
 	outputBytes := &bytes.Buffer{}
 	writerOutput := csv.NewWriter(outputBytes)
-	err := writerOutput.WriteAll(data)
+	err := writerOutput.Write(meta.GetMainDataResource().GenerateHeader())
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to write batch header")
+	}
+
+	err = writerOutput.WriteAll(data)
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to write batch data")
 	}
@@ -133,4 +151,18 @@ func writeBatch(meta *model.Metadata, datasetPath string, batchID string, data [
 	}
 
 	return batchOutputPath, nil
+}
+
+func adjustBatchSize(config *env.Config, currentBatchSize float64, previousTimeTaken time.Duration, currentTimeTaken time.Duration) int {
+	if currentTimeTaken < previousTimeTaken {
+		newSize := int(currentBatchSize * config.BatchSizeIncreaseFactor)
+		log.Infof("latest batch took less time (%v) than previous batch (%v) so increasing batch size to %d",
+			currentTimeTaken, previousTimeTaken, newSize)
+		return newSize
+	}
+
+	newSize := int(currentBatchSize * config.BatchSizeDecreaseFactor)
+	log.Infof("latest batch took more time (%v) than previous batch (%v) so decreasing batch size to %d",
+		currentTimeTaken, previousTimeTaken, newSize)
+	return int(currentBatchSize * config.BatchSizeDecreaseFactor)
 }

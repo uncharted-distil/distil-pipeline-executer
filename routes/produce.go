@@ -167,7 +167,7 @@ func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request)
 			return
 		}
 
-		queue := &task.Queue{}
+		queue := task.NewQueue()
 		queue.AddDataset(images.ID)
 		for _, r := range data {
 			queue.AddEntry(images.ID, r)

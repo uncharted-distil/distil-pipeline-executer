@@ -28,18 +28,20 @@ var (
 
 // Config represents the application configuration state loaded from env vars.
 type Config struct {
-	AppPort       string `env:"PORT" envDefault:"8080"`
-	BatchSize     int    `env:"BATCH_SIZE" envDefault:"100"`
-	ClearDataset  bool   `env:"CLEAR_DATASET" envDefault:"true"`
-	D3MOutputDir  string `env:"D3MOUTPUTDIR" envDefault:"outputs"`
-	D3MStaticDir  string `env:"D3MSTATICDIR" envDefault:"/data/static_resources"`
-	DatasetDir    string `env:"DATASET_DIR" envDefault:"datasets"`
-	PipelineD3M   string `env:"PIPELINE_D3M" envDefault:"pipeline.d3m"`
-	PipelineDir   string `env:"PIPELINE_DIR" envDefault:"pipelines"`
-	PipelineJSON  string `env:"PIPELINE_JSON" envDefault:"pipeline.json"`
-	PredictionDir string `env:"PREDICTION_DIR" envDefault:"predictions"`
-	ProblemFile   string `env:"PROBLEM_FILE" envDefault:"problemDoc.json"`
-	VerboseError  bool   `env:"VERBOSE_ERROR" envDefault:"false"`
+	AppPort                 string  `env:"PORT" envDefault:"8080"`
+	BatchSize               int     `env:"BATCH_SIZE" envDefault:"100"`
+	BatchSizeIncreaseFactor float64 `env:"BATCH_SIZE_INCREASE_FACTOR" envDefault:"1.2"`
+	BatchSizeDecreaseFactor float64 `env:"BATCH_SIZE_DECREASE_FACTOR" envDefault:"0.9"`
+	ClearDataset            bool    `env:"CLEAR_DATASET" envDefault:"true"`
+	D3MOutputDir            string  `env:"D3MOUTPUTDIR" envDefault:"outputs"`
+	D3MStaticDir            string  `env:"D3MSTATICDIR" envDefault:"/data/static_resources"`
+	DatasetDir              string  `env:"DATASET_DIR" envDefault:"datasets"`
+	PipelineD3M             string  `env:"PIPELINE_D3M" envDefault:"pipeline.d3m"`
+	PipelineDir             string  `env:"PIPELINE_DIR" envDefault:"pipelines"`
+	PipelineJSON            string  `env:"PIPELINE_JSON" envDefault:"pipeline.json"`
+	PredictionDir           string  `env:"PREDICTION_DIR" envDefault:"predictions"`
+	ProblemFile             string  `env:"PROBLEM_FILE" envDefault:"problemDoc.json"`
+	VerboseError            bool    `env:"VERBOSE_ERROR" envDefault:"false"`
 }
 
 // LoadConfig loads the config from the environment if necessary and returns a
