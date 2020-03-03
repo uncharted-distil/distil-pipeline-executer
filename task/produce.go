@@ -81,7 +81,7 @@ func ProduceBatch(pipelineID string, schemaFile string, predictionsID string, qu
 
 	output := make([][]string, 0)
 	count := 1
-	currentTimeTaken := 10 * time.Second
+	previousThroughput := 10.0
 	for {
 		batch := queue.RemoveEntries(predictionsID, batchSize)
 		if len(batch) == 0 {
@@ -121,9 +121,8 @@ func ProduceBatch(pipelineID string, schemaFile string, predictionsID string, qu
 		output = append(output, batchOutput...)
 
 		count = count + 1
-		previousTimeTaken := currentTimeTaken
-		currentTimeTaken = produceEnd.Sub(produceStart)
-		batchSize = adjustBatchSize(config, float64(batchSize), previousTimeTaken, currentTimeTaken)
+		currentTimeTaken := produceEnd.Sub(produceStart)
+		batchSize, previousThroughput = adjustBatchSize(config, float64(batchSize), currentTimeTaken, previousThroughput)
 	}
 
 	return output, nil
@@ -153,16 +152,17 @@ func writeBatch(meta *model.Metadata, datasetPath string, batchID string, data [
 	return batchOutputPath, nil
 }
 
-func adjustBatchSize(config *env.Config, currentBatchSize float64, previousTimeTaken time.Duration, currentTimeTaken time.Duration) int {
-	if currentTimeTaken < previousTimeTaken {
+func adjustBatchSize(config *env.Config, currentBatchSize float64, currentTimeTaken time.Duration, previousThroughput float64) (int, float64) {
+	currentThroughput := currentBatchSize / currentTimeTaken.Seconds()
+	if currentThroughput > previousThroughput {
 		newSize := int(currentBatchSize * config.BatchSizeIncreaseFactor)
-		log.Infof("latest batch took less time (%v) than previous batch (%v) so increasing batch size to %d",
-			currentTimeTaken, previousTimeTaken, newSize)
-		return newSize
+		log.Infof("latest batch had higher throughput (%v) than previous batch (%v) so increasing batch size to %d",
+			currentThroughput, previousThroughput, newSize)
+		return newSize, currentThroughput
 	}
 
 	newSize := int(currentBatchSize * config.BatchSizeDecreaseFactor)
-	log.Infof("latest batch took more time (%v) than previous batch (%v) so decreasing batch size to %d",
-		currentTimeTaken, previousTimeTaken, newSize)
-	return int(currentBatchSize * config.BatchSizeDecreaseFactor)
+	log.Infof("latest batch had lower throughput (%v) than previous batch (%v) so decreasing batch size to %d",
+		currentThroughput, previousThroughput, newSize)
+	return newSize, currentThroughput
 }
