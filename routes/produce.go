@@ -18,7 +18,6 @@ package routes
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -32,6 +31,7 @@ import (
 	"github.com/pkg/errors"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-compute/metadata"
 	cm "github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
 	"github.com/uncharted-distil/distil-pipeline-executer/model"
@@ -161,30 +161,28 @@ func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request)
 			return
 		}
 
-		// run predictions on the newly created dataset
-		outputFile, err := task.Produce(pipelineID, schemaPath, images.ID, config)
+		data, err := readData(schemaPath)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
-		// read the output
-		log.Infof("processing produce output")
-		file, err := os.Open(outputFile)
+		queue := task.NewQueue()
+		queue.AddDataset(images.ID)
+		for _, r := range data {
+			queue.AddEntry(images.ID, r)
+		}
+
+		// run predictions on the newly created dataset
+		predictions, err := task.ProduceBatch(pipelineID, schemaPath, images.ID, queue, config)
 		if err != nil {
 			handleError(w, err)
-			return
-		}
-		reader := csv.NewReader(file)
-		predictionsRaw, err := reader.ReadAll()
-		if err != nil {
-			handleError(w, errors.Wrap(err, "unable to read produce output"))
 			return
 		}
 
 		// create the prediction output (skipping header)
 		output := make([]*Prediction, 0)
-		for _, p := range predictionsRaw[1:] {
+		for _, p := range predictions {
 			output = append(output, &Prediction{
 				ID:    p[0],
 				Value: p[1],
@@ -209,4 +207,21 @@ func ProduceHandler(config *env.Config) func(http.ResponseWriter, *http.Request)
 			return
 		}
 	}
+}
+
+func readData(schemaFilename string) ([][]string, error) {
+	meta, err := metadata.LoadMetadataFromOriginalSchema(schemaFilename, false)
+	if err != nil {
+		return nil, err
+	}
+
+	mainDR := meta.GetMainDataResource()
+	dateFilename := path.Join(path.Dir(schemaFilename), mainDR.ResPath)
+
+	data, err := util.ReadCSVFile(dateFilename, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
