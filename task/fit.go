@@ -30,9 +30,10 @@ import (
 func Fit(pipelineID string, schemaFile string, predictionsID string, config *env.Config) error {
 	// run the fit command
 	log.Infof("running fit command using shell")
+	outputPath := env.ResolvePipelineD3MPath(pipelineID)
 	commandLine := fmt.Sprintf("python3 runner.py runtime -v %s fit -r %s -i %s -p %s -s %s",
 		config.D3MStaticDir, env.ResolveProblemPath(pipelineID), schemaFile,
-		env.ResolvePipelineJSONPath(pipelineID), env.ResolvePipelineD3MPath(pipelineID))
+		env.ResolvePipelineJSONPath(pipelineID), outputPath)
 	cmd := exec.Command("/bin/sh", "-c", commandLine)
 
 	var stdout bytes.Buffer
@@ -46,6 +47,7 @@ func Fit(pipelineID string, schemaFile string, predictionsID string, config *env
 		log.Errorf("err: %s", stderr.String())
 		return errors.Wrap(err, "unable to run fit command")
 	}
+	log.Infof("wrote trained pipeline to '%s'", outputPath)
 
 	return nil
 }
