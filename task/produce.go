@@ -49,7 +49,8 @@ func Produce(pipelineID string, schemaFile string, predictionsID string, config 
 	}
 	log.Infof("predictions output folder created ('%s')", predictionsDir)
 
-	commandLine := fmt.Sprintf("python3 runner.py runtime -v %s produce -t %s -f %s -o %s", config.D3MStaticDir, schemaFile, env.ResolvePipelineD3MPath(pipelineID), predictionOutput)
+	commandLine := fmt.Sprintf("python3 runner.py runtime -v %s produce -t %s -f %s -o %s",
+		config.D3MStaticDir, schemaFile, env.ResolvePipelineD3MPath(pipelineID), predictionOutput)
 	cmd := exec.Command("/bin/sh", "-c", commandLine)
 
 	var stdout bytes.Buffer

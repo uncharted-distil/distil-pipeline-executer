@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/pkg/errors"
+	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
@@ -31,6 +32,7 @@ import (
 func FitHandler(config *env.Config) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pipelineID := pat.Param(r, "pipeline-id")
+		log.Infof("fit request received for pipeline '%s'", pipelineID)
 		//typ := pat.Param(r, "type")
 		//format := pat.Param(r, "format")
 
@@ -42,6 +44,7 @@ func FitHandler(config *env.Config) func(http.ResponseWriter, *http.Request) {
 		}
 		defer r.Body.Close()
 
+		log.Infof("unmarshalling request body")
 		images := &ImageDataset{}
 		err = json.Unmarshal(requestBody, images)
 		if err != nil {
@@ -60,6 +63,16 @@ func FitHandler(config *env.Config) func(http.ResponseWriter, *http.Request) {
 		err = task.Fit(pipelineID, schemaPath, images.ID, config)
 		if err != nil {
 			handleError(w, err)
+			return
+		}
+
+		err = handleJSON(w, map[string]interface{}{
+			"pipelineId":   pipelineID,
+			"predictionId": images.ID,
+			"fitted":       true,
+		})
+		if err != nil {
+			handleError(w, errors.Wrap(err, "unable marshal produce result into JSON"))
 			return
 		}
 	}
