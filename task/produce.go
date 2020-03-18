@@ -42,7 +42,7 @@ func Produce(pipelineID string, schemaFile string, predictionsID string, config 
 
 	// need to make the output folder for the predictions
 	predictionsDir := env.ResolvePredictionPath(predictionsID)
-	predictionOutput := path.Join(predictionsDir, "predictions.csv")
+	predictionOutput := path.Join(predictionsDir, "outputs.0.csv")
 	err := os.MkdirAll(predictionsDir, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to create predictions output folder")
