@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 #RUN pip3 install -e git+https://gitlab.com/datadrivendiscovery/common-primitives.git@d9ee09a8838a222cead2a093d03c623603e175f9#egg=CommonPrimitives
 
 # install distil primitives
-RUN pip3 install -e git+https://github.com/uncharted-distil/distil-primitives.git@afbd30199f82107cf9308c3dbd575bf09ff45da7#egg=DistilPrimitives
+RUN pip3 install -e git+https://github.com/uncharted-distil/distil-primitives.git@95e763780eafb16454891993bd5c04a5862f2f40#egg=DistilPrimitives
 
 # copy the app
 WORKDIR /app

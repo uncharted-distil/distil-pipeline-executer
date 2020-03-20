@@ -3,11 +3,11 @@
 HIGHLIGHT='\033[0;34m'
 NC='\033[0m'
 
-DISTIL_VERSION=1e8b6d069315fcf34e34de7d38a07375d99b0f03
+DISTIL_VERSION=e6daa843ec74b25f8f46f9081dd9df3fe638ca9c
 D3MSTATICDIR=/data/static_resources
 DOCKER_REPO=docker.uncharted.software
 DOCKER_IMAGE_NAME=distil_service
-DOCKER_IMAGE_VERSION=0.1.0
+DOCKER_IMAGE_VERSION=0.1.1
 
 # get distil service executable
 env GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go get -a -v github.com/uncharted-distil/distil-pipeline-executer@$DISTIL_VERSION
