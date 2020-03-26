@@ -28,6 +28,7 @@ import (
 	"github.com/uncharted-distil/distil-compute/metadata"
 	cm "github.com/uncharted-distil/distil-compute/model"
 	"github.com/uncharted-distil/distil-compute/primitive/compute"
+	"github.com/uncharted-distil/distil-pipeline-executer/dataset"
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
 	"github.com/uncharted-distil/distil-pipeline-executer/model"
 	"github.com/uncharted-distil/distil/api/util"
@@ -35,12 +36,14 @@ import (
 
 // DatasetConstructor is used to build a dataset.
 type DatasetConstructor interface {
+	GetPredictionsID() string
 	CreateDataset(rootPath string) (*model.Dataset, error)
 }
 
 // CreateDataset creates a dataset that can be used for fitting a pipeline or
 // producing predictions from a pipeline.
-func CreateDataset(pipelineID string, predictionsID string, datasetCtor DatasetConstructor) (string, error) {
+func CreateDataset(pipelineID string, datasetCtor DatasetConstructor) (string, error) {
+	predictionsID := datasetCtor.GetPredictionsID()
 	log.Infof("creating dataset for pipeline '%s' using prediction id '%s'", pipelineID, predictionsID)
 	// create the raw dataset from the input
 	datasetPath := env.ResolveDatasetPath(predictionsID)
@@ -168,4 +171,29 @@ func ClearDataset(pipelineID string, predictionID string) error {
 		return err
 	}
 	return nil
+}
+
+// GetDatasetType returns the type of dataset on which the specified pipeline acts.
+func GetDatasetType(pipelineID string) (dataset.Type, error) {
+	// load the metadata for the pipeline dataset
+	pipelinePath := env.ResolvePipelinePath(pipelineID)
+	pipelineSchemaDoc := path.Join(pipelinePath, compute.D3MDataSchema)
+	meta, err := metadata.LoadMetadataFromOriginalSchema(pipelineSchemaDoc, false)
+	if err != nil {
+		return dataset.UnknownType, err
+	}
+
+	// use the data resources to determine the type of dataset
+	if len(meta.DataResources) == 1 && meta.DataResources[0].ResType == "table" {
+		return dataset.TableType, nil
+	}
+
+	// image dataset has a data resource with image type
+	for _, dr := range meta.DataResources {
+		if dr.ResType == "image" {
+			return dataset.ImageType, nil
+		}
+	}
+
+	return dataset.UnknownType, errors.New("unsupported dataset type")
 }
