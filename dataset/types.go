@@ -13,12 +13,16 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package model
+package dataset
 
-// Dataset contains basic information about the structure of the dataset as well
-// as the raw learning data.
-type Dataset struct {
-	ID        string
-	Variables []string
-	Data      [][]string
-}
+// Type is an enum for supported dataset types.
+type Type string
+
+const (
+	// ImageType is the value for image datasets.
+	ImageType Type = "Image"
+	// TableType is the value for table datasets.
+	TableType = "Table"
+	// UnknownType is the catch all dataset type.
+	UnknownType = "Unknown"
+)

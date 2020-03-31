@@ -16,7 +16,6 @@
 package routes
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -24,6 +23,7 @@ import (
 	log "github.com/unchartedsoftware/plog"
 	"goji.io/v3/pat"
 
+	"github.com/uncharted-distil/distil-pipeline-executer/dataset"
 	"github.com/uncharted-distil/distil-pipeline-executer/env"
 	"github.com/uncharted-distil/distil-pipeline-executer/task"
 )
@@ -45,22 +45,35 @@ func FitHandler(config *env.Config) func(http.ResponseWriter, *http.Request) {
 		defer r.Body.Close()
 
 		log.Infof("unmarshalling request body")
-		images := &ImageDataset{}
-		err = json.Unmarshal(requestBody, images)
+		datasetType, err := task.GetDatasetType(pipelineID)
 		if err != nil {
-			handleError(w, errors.Wrapf(err, "unable to parse json"))
+			handleError(w, err)
+			return
+		}
+
+		var ds task.DatasetConstructor
+		switch datasetType {
+		case dataset.ImageType:
+			ds, err = dataset.NewImageDataset(requestBody)
+		case dataset.TableType:
+			ds, err = dataset.NewTableDataset(requestBody)
+		case dataset.UnknownType:
+			err = errors.New("unsupproted dataset type")
+		}
+		if err != nil {
+			handleError(w, err)
 			return
 		}
 
 		// create the dataset to be used for the produce call
-		schemaPath, err := task.CreateDataset(pipelineID, images.ID, images)
+		schemaPath, err := task.CreateDataset(pipelineID, ds)
 		if err != nil {
 			handleError(w, err)
 			return
 		}
 
 		// run predictions on the newly created dataset
-		err = task.Fit(pipelineID, schemaPath, images.ID, config)
+		err = task.Fit(pipelineID, schemaPath, ds.GetPredictionsID(), config)
 		if err != nil {
 			handleError(w, err)
 			return
@@ -68,7 +81,7 @@ func FitHandler(config *env.Config) func(http.ResponseWriter, *http.Request) {
 
 		err = handleJSON(w, map[string]interface{}{
 			"pipelineId":   pipelineID,
-			"predictionId": images.ID,
+			"predictionId": ds.GetPredictionsID(),
 			"fitted":       true,
 		})
 		if err != nil {
